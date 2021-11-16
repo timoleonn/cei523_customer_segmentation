@@ -9,6 +9,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime, nltk, warnings
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
 import matplotlib.cm as cm
 import itertools
 from sklearn.preprocessing import StandardScaler
@@ -103,6 +105,9 @@ def runCodeDataPreperation():
     # Duplicates are not usefull data so we drop them
     dataframe.drop_duplicates(inplace = True)
 
+    # Save Dataframe to csv so we can use in other sections
+    dataframe.to_csv('newDataframe.csv')
+
 
 #   SECOND TAB
 def secondTab():
@@ -123,6 +128,9 @@ def secondTab():
         runCodeForSection2()
         
 def runCodeForSection2():
+    # Read Dataframe so we can use in other sections
+    dataframe = pd.read_csv("newDataframe.csv",encoding='unicode_escape')
+
     # Now we are going to explore the countries that our orders corresponds
 
     # We are groub the orders by invoice number and customer id to find how many orders we have from each country
@@ -215,14 +223,14 @@ def runCodeForSection2():
                 cancellation.append(index) 
                 break
 
-    print("Cancellation: {}".format(len(cancellation)))
-    print("Discount: {}".format(len(discount)))
+    st.write("Cancellation: {}".format(len(cancellation)))
+    st.write("Discount: {}".format(len(discount)))
 
     # Here we check for the entries  of cancellations that we left from the process before
     dataframeClean.drop(cancellation, axis = 0, inplace = True)
     dataframeClean.drop(discount, axis = 0, inplace = True)
     remaining_entries = dataframeClean[(dataframeClean['Quantity'] < 0) & (dataframeClean['StockCode'] != 'D')]
-    print("Number of entries to delete: {}".format(remaining_entries.shape[0]))
+    st.write("Number of entries to delete: {}".format(remaining_entries.shape[0]))
     remaining_entries[:5]
 
     # Stock Code which indicates a transaction type
@@ -233,6 +241,9 @@ def runCodeForSection2():
     dataframeClean['TotalPrice'] = dataframeClean['UnitPrice'] * (dataframeClean['Quantity'] - dataframeClean['QuantityCanceled'])
     st.write(dataframeClean.sort_values('CustomerID')[:5])
 
+    # Save Dataframe to csv so we can use in other sections
+    dataframeClean.to_csv('dataframeClean.csv')
+
     # Here we sum the total price for each product which correspoonds to the same order
     temp = dataframeClean.groupby(['CustomerID', 'InvoiceNo'], as_index=False)['TotalPrice'].sum()
     basket = temp.rename(columns = {'TotalPrice':'Basket Price'})
@@ -242,8 +253,8 @@ def runCodeForSection2():
 
     # Here we take care of the minimum and maximum values to find ranges to present the percentage of orders that has a specific
     # ammount paid
-    print("Maximum total price of order",basket['Basket Price'].max())
-    print("Minimum total price of order",basket['Basket Price'].min())
+    st.write("Maximum total price of order",basket['Basket Price'].max())
+    st.write("Minimum total price of order",basket['Basket Price'].min())
 
     # Initialize the ranges to find how many total prices of orders are inside this ranges
     ranges = [0,50,100,200,500,1000,3000]
@@ -254,6 +265,9 @@ def runCodeForSection2():
         val = basket[(basket['Basket Price'] < range1) &
             (basket['Basket Price'] > ranges[i-1])]['Basket Price'].count()
         countRanges.append(val)
+
+    # Save Dataframe to csv so we can use in other sections
+    dataframe.to_csv('newDataframe.csv')
 
     # Pie chart of the above results
     plt.rc('font', weight='bold')
@@ -267,10 +281,188 @@ def runCodeForSection2():
         shadow = False, startangle=0)
     ax.axis('equal')
     f.text(0.5, 1.01, "Répartition des montants des commandes", ha='center', fontsize = 18);
+    
+    st.pyplot(f)
 
 
+#   THIRD TAB
 def thirdTab():
-    st.subheader("Inside on product categories")
+    st.subheader("3. Insight on product categories")
+    
+    if st.button("run code"):
+        runCodeForSection3()
+
+def runCodeForSection3():
+    # Read Dataframe so we can use in other sections
+    dataframe = pd.read_csv("newDataframe.csv",encoding='unicode_escape')
+    dataframeClean = pd.read_csv("dataframeClean.csv",encoding='unicode_escape')
+
+    # Here we have the function that we are going to use to find usefull information from the description of each product
+    def keywords(dataframe):
+        stemmer = nltk.stem.SnowballStemmer("english")
+        keywords_roots  = dict()  
+        keywords_select = dict()  
+        category_keys   = []
+        count_keywords  = dict()
+        for description in dataframe['Description']:
+            if pd.isnull(description): continue
+            line = description.lower()
+            tokenized = nltk.word_tokenize(line)
+            nouns = [word for (word, pos) in nltk.pos_tag(tokenized) if pos[:2]=='NN'] 
+            
+            for w in nouns:
+                w = w.lower() 
+                root = stemmer.stem(w)
+                if root in keywords_roots:                
+                    keywords_roots[root].add(w)
+                    count_keywords[root] += 1                
+                else:
+                    keywords_roots[root] = {w}
+                    count_keywords[root] = 1
+        
+        for value in keywords_roots.keys():
+            if len(keywords_roots[value]) > 1:  
+                min_length = 1000
+                for k in keywords_roots[value]:
+                    if len(k) < min_length:
+                        selected = k 
+                        min_length = len(k)            
+                category_keys.append(selected)
+                keywords_select[value] = selected
+            else:
+                category_keys.append(list(keywords_roots[value])[0])
+                keywords_select[value] = list(keywords_roots[value])[0]
+
+        return category_keys, keywords_roots, keywords_select, count_keywords
+
+    # We are taking the unique descriptions to avoid the duplicates
+    dataframeProducts = pd.DataFrame(dataframe['Description'].unique()).rename(columns = {0:'Description'})
+
+    # We are running the function we constructed above to fing the keywords
+    keywords, keywords_roots, keywords_select, count_keywords = keywords(dataframeProducts)
+
+    # Here we convert the dictionary to list and sort the keywords from the larger occurrence number of keyword to the smaller
+    list_products = []
+    for key,value in count_keywords.items():
+        list_products.append([keywords_select[key],value])
+    list_products.sort(key = lambda x:x[1], reverse = True)
+    list1 = sorted(list_products, key = lambda x:x[1], reverse = True)
+
+    # Here we make a sketch to see the 50 keywords with larger occurence number
+    plt.rc('font', weight='normal')
+    fig, ax = plt.subplots(figsize=(7, 25))
+    y_axis = [i[1] for i in list1[:50]]
+    x_axis = [k for k,i in enumerate(list1[:50])]
+    x_label = [i[0] for i in list1[:50]]
+    plt.xticks(fontsize = 15)
+    plt.yticks(fontsize = 13)
+    plt.yticks(x_axis, x_label)
+    plt.xlabel("Number of occurences of first 50 keywords", fontsize = 8, labelpad = 8)
+    ax.barh(x_axis, y_axis, align = 'center')
+    ax = plt.gca()
+    ax.invert_yaxis()
+    plt.title("Words occurence",bbox={'facecolor':'k', 'pad':5}, color='w',fontsize = 8)
+    # plt.show()
+    st.pyplot(fig)
+
+    # Here we remove some words that we saw inside the keywords and was colours or had special characters and keep only the
+    # keywords which is larger than 3 characters to avoid some spowords and keywords that appears more than 13 times
+    new_list_products = []
+    for key,value in count_keywords.items():
+        word = keywords_select[key]
+        if word in ['pink', 'blue', 'tag', 'green', 'orange']:
+            continue
+        if len(word) < 3 or value < 13:
+            continue
+        if ('+' in word) or ('/' in word):
+            continue
+        new_list_products.append([word, value])  
+    new_list_products.sort(key = lambda x:x[1], reverse = True)
+    st.write('Remaining words: ',len(new_list_products))
+
+    # We used the keywrods to create groups of products and encode our data with 1 hot encoding
+    description1 = dataframeClean['Description'].unique()
+    X = pd.DataFrame()
+    for key, occurence in new_list_products:
+        X.loc[:, key] = list(map(lambda x:int(key.upper() in x), description1))
+
+    # We check for how many clusters is better for our data base on silouette score which is show us 
+    # if the clusters are well apart from each other and clearly distinguished
+    matrix = X.values
+    for n_clusters in range(3, 10):
+        kmeans = KMeans(init = 'k-means++', n_clusters = n_clusters, n_init = 30)
+        kmeans.fit(matrix)
+        clusters = kmeans.predict(matrix)
+        silhouette_avg = silhouette_score(matrix, clusters)
+        st.write("For n_clusters = ", n_clusters, "The average silhouette_score is:", silhouette_avg)
+
+    # We decided to take 5 clusters because when we chose to proceed with more cluster we saw that many clusters had only a few
+    # words and if we choose less than 3 we will go to binary classification and we dont want it
+    # Here we are itterating the process until we obtain a good sillouette average which is arround 0.1+-0.05
+    n_clusters = 5
+    silhouette_avg = -1
+    while silhouette_avg < 0.145:
+        kmeans = KMeans(init = 'k-means++', n_clusters = n_clusters, n_init = 30)
+        kmeans.fit(matrix)
+        clusters = kmeans.predict(matrix)
+        silhouette_avg = silhouette_score(matrix, clusters)
+        
+        st.write("For n_clusters = ", n_clusters, "The average silhouette_score is: ", silhouette_avg)
+
+    st.write('Words in clusters\n',pd.Series(clusters).value_counts())
+
+    liste = pd.DataFrame(description1)
+    liste_words = [word for (word, occurence) in new_list_products]
+
+    occurence = [dict() for _ in range(n_clusters)]
+
+    for i in range(n_clusters):
+        liste_cluster = liste.loc[clusters == i]
+        for word in liste_words:
+            if word in ['art', 'set', 'heart', 'pink', 'blue', 'tag']: continue
+            occurence[i][word] = sum(liste_cluster.loc[:, 0].str.contains(word.upper()))
+            
+            
+
+    #________________________________________________________________________
+    def random_color_func(word=None, font_size=None, position=None,
+                        orientation=None, font_path=None, random_state=None):
+        h = int(360.0 * tone / 255.0)
+        s = int(100.0 * 255.0 / 255.0)
+        l = int(100.0 * float(random_state.randint(70, 120)) / 255.0)
+        return "hsl({}, {}%, {}%)".format(h, s, l)
+    #________________________________________________________________________
+    def make_wordcloud(liste, increment):
+        ax1 = fig.add_subplot(4,2,increment)
+        words = dict()
+        trunc_occurences = liste[0:150]
+        for s in trunc_occurences:
+            words[s[0]] = s[1]
+        #________________________________________________________
+        wordcloud = WordCloud(width=1000,height=400, background_color='lightgrey', 
+                            max_words=1628,relative_scaling=1,
+                            color_func = random_color_func,
+                            normalize_plurals=False)
+        wordcloud.generate_from_frequencies(words)
+        ax1.imshow(wordcloud, interpolation="bilinear")
+        ax1.axis('off')
+        plt.title('cluster nº{}'.format(increment-1))
+    #________________________________________________________________________
+    fig = plt.figure(1, figsize=(14,14))
+    color = [0, 160, 130, 95, 280, 40, 330, 110, 25]
+    for i in range(n_clusters):
+        list_cluster_occurences = occurence[i]
+
+        tone = color[i] # define the color of the words
+        liste = []
+        for key, value in list_cluster_occurences.items():
+            liste.append([key, value])
+        liste.sort(key = lambda x:x[1], reverse = True)
+        make_wordcloud(liste, i+1)  
+    st.pyplot(fig, clear_figure=True)          
+
+
+
 
 #   ===================
 #   LEFT SIDEBAR COLUMN
