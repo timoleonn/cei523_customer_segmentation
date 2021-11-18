@@ -33,6 +33,8 @@ plt.rcParams["patch.force_edgecolor"] = True
 plt.style.use('fivethirtyeight')
 mpl.rc('patch', edgecolor = 'dimgray', linewidth=1)
 
+import csv
+
 #   FIRST TAB
 def dataPreperation():
     st.subheader("Data Preperation")
@@ -285,12 +287,14 @@ def runCodeForSection2():
     st.pyplot(f)
 
 
+#   ==========
 #   THIRD TAB
+#   ==========
 def thirdTab():
     st.subheader("3. Insight on product categories")
     
     if st.button("run code"):
-        runCodeForSection3()
+        return runCodeForSection3()
 
 def runCodeForSection3():
     # Read Dataframe so we can use in other sections
@@ -405,6 +409,8 @@ def runCodeForSection3():
         kmeans = KMeans(init = 'k-means++', n_clusters = n_clusters, n_init = 30)
         kmeans.fit(matrix)
         clusters = kmeans.predict(matrix)
+        # st.write("[WARNING]: \n")
+        # st.write(clusters)
         silhouette_avg = silhouette_score(matrix, clusters)
         
         st.write("For n_clusters = ", n_clusters, "The average silhouette_score is: ", silhouette_avg)
@@ -433,20 +439,23 @@ def runCodeForSection3():
         return "hsl({}, {}%, {}%)".format(h, s, l)
     #________________________________________________________________________
     def make_wordcloud(liste, increment):
-        ax1 = fig.add_subplot(4,2,increment)
+        new_figure = plt.figure()
+        ax1 = new_figure.add_subplot(4, 2, increment)
+        # ax1 = fig.add_subplot(4,2,increment)
         words = dict()
         trunc_occurences = liste[0:150]
         for s in trunc_occurences:
             words[s[0]] = s[1]
         #________________________________________________________
-        wordcloud = WordCloud(width=1000,height=400, background_color='lightgrey', 
-                            max_words=1628,relative_scaling=1,
+        wordcloud = WordCloud(width=1000, height=400, background_color='lightgrey', 
+                            max_words=1628, relative_scaling = 1,
                             color_func = random_color_func,
-                            normalize_plurals=False)
+                            normalize_plurals = False)
         wordcloud.generate_from_frequencies(words)
-        ax1.imshow(wordcloud, interpolation="bilinear")
+        ax1.imshow(wordcloud, interpolation = "bilinear")
         ax1.axis('off')
-        plt.title('cluster nº{}'.format(increment-1))
+        plt.title('cluster nº{}'.format(increment - 1))
+        st.pyplot(ax1.figure)  
     #________________________________________________________________________
     fig = plt.figure(1, figsize=(14,14))
     color = [0, 160, 130, 95, 280, 40, 330, 110, 25]
@@ -459,10 +468,217 @@ def runCodeForSection3():
             liste.append([key, value])
         liste.sort(key = lambda x:x[1], reverse = True)
         make_wordcloud(liste, i+1)  
-    st.pyplot(fig, clear_figure=True)          
+
+    # Save Dataframe to csv so we can use in other sections
+    pd.DataFrame(description1).to_csv('description1.csv')
+    pd.DataFrame(clusters).to_csv('clusters.csv')
+    st.write(type(clusters))
+    st.write(clusters)
+            
+
+#   ==========
+#   FOURTH TAB
+#   ==========
+def fourthTab():
+    st.subheader("4. Customer categories")
+    
+    if st.button("run code"):
+        runCodeForSection4()
+
+def runCodeForSection4():
+    # Read Dataframe so we can use in other sections
+    dataframe = pd.read_csv("newDataframe.csv",encoding='unicode_escape')
+    dataframeClean = pd.read_csv("dataframeClean.csv",encoding='unicode_escape')
+    description1 = pd.read_csv("description1.csv",encoding='unicode_escape').to_numpy()
+    # clusters = pd.read_csv("clusters.csv")
+
+    file = open("clusters.csv", "r")
+    csv_reader = csv.reader(file)
+
+    clusters1 = []
+    for row in csv_reader:
+        clusters1.append(row)
+
+    st.write(np.array(clusters1))
+    st.write(type(np.array(clusters1)))
+
+    clusters = np.array(clusters1)
+    st.write(type(description1))
 
 
+    # # Here we specify the category of each product for all of our records
+    # corresp = dict()
+    # for key, val in zip (description1, clusters):
+    #     corresp[key] = val 
+    # dataframeClean['categ_product'] = dataframeClean.loc[:, 'Description'].map(corresp)
 
+    # Here we have the amount spent in each category for each product
+    for i in range(5):
+        column = 'categ_{}'.format(i)        
+        df_temp = dataframeClean[dataframeClean['categ_product'] == i]
+        price_temp = df_temp['UnitPrice'] * (df_temp['Quantity'] - df_temp['QuantityCanceled'])
+        price_temp = price_temp.apply(lambda x:x if x > 0 else 0)
+        dataframeClean.loc[:, column] = price_temp
+        dataframeClean[column].fillna(0, inplace = True)
+    dataframeClean[['InvoiceNo', 'Description', 'categ_product', 'categ_0', 'categ_1', 'categ_2', 'categ_3','categ_4']][:5]
+
+    # Here we did again the total basket price for all invoices
+    temp = dataframeClean.groupby(['CustomerID', 'InvoiceNo'], as_index=False)['TotalPrice'].sum()
+    basket = temp.rename(columns = {'TotalPrice':'Basket Price'})
+
+    # We calculate for each orders how much money the customer spend for each category
+    temp0 = dataframeClean.groupby(by=['CustomerID', 'InvoiceNo'], as_index=False)['categ_0'].sum()
+    temp1 = dataframeClean.groupby(by=['CustomerID', 'InvoiceNo'], as_index=False)['categ_1'].sum()
+    temp2 = dataframeClean.groupby(by=['CustomerID', 'InvoiceNo'], as_index=False)['categ_2'].sum()
+    temp3 = dataframeClean.groupby(by=['CustomerID', 'InvoiceNo'], as_index=False)['categ_3'].sum()
+    temp4 = dataframeClean.groupby(by=['CustomerID', 'InvoiceNo'], as_index=False)['categ_4'].sum()
+
+    # Here we merge the above information to our basket dataset
+    basket.insert(loc=3,column='categ_0',value=temp0['categ_0'])
+    basket.insert(loc=4,column='categ_1',value=temp1['categ_1'])
+    basket.insert(loc=5,column='categ_2',value=temp2['categ_2'])
+    basket.insert(loc=6,column='categ_3',value=temp3['categ_3'])
+    basket.insert(loc=7,column='categ_4',value=temp4['categ_4'])
+
+    # Here we take into accoung the date and time of the orders
+    dataframeClean['InvoiceDate_int'] = dataframeClean['InvoiceDate'].astype('int64')
+    temp = dataframeClean.groupby(by=['CustomerID', 'InvoiceNo'], as_index=False)['InvoiceDate_int'].mean()
+    dataframeClean.drop('InvoiceDate_int', axis = 1, inplace = True)
+    basket.loc[:, 'InvoiceDate'] = pd.to_datetime(temp['InvoiceDate_int'])
+    basket = basket[basket['Basket Price'] > 0]
+    basket.sort_values('CustomerID', ascending = True)[:5]
+
+    # Split the dataset so we can train and test our algorithm
+    set_entrainement = basket[basket['InvoiceDate'] < pd.to_datetime('2011-10-1')]
+    set_test         = basket[basket['InvoiceDate'] >= pd.to_datetime('2011-10-1')]
+    basket = set_entrainement.copy(deep = True)
+
+    # Here we find the max, the min and the mean of each customer transaction per user per category
+    transactions_per_user=basket.groupby(by=['CustomerID'])['Basket Price'].agg(['count','min','max','mean','sum'])
+    temp0 = basket.groupby(by=['CustomerID'])['categ_0'].sum()/transactions_per_user['sum']*100
+    temp1 = basket.groupby(by=['CustomerID'])['categ_1'].sum()/transactions_per_user['sum']*100
+    temp2 = basket.groupby(by=['CustomerID'])['categ_2'].sum()/transactions_per_user['sum']*100
+    temp3 = basket.groupby(by=['CustomerID'])['categ_3'].sum()/transactions_per_user['sum']*100
+    temp4 = basket.groupby(by=['CustomerID'])['categ_4'].sum()/transactions_per_user['sum']*100
+
+    # Here we inserted this data to the basket
+    transactions_per_user.insert(loc=5,column='categ_0',value=temp0)
+    transactions_per_user.insert(loc=6,column='categ_1',value=temp1)
+    transactions_per_user.insert(loc=7,column='categ_2',value=temp2)
+    transactions_per_user.insert(loc=8,column='categ_3',value=temp3)
+    transactions_per_user.insert(loc=9,column='categ_4',value=temp4)
+
+    transactions_per_user.reset_index(drop = False, inplace = True)
+    transactions_per_user.sort_values('CustomerID', ascending = True)[:5]
+
+    # Here we are going to use the invoice date to find the days after last purchases and the days after first purchases 
+    last_date = basket['InvoiceDate'].max().date()
+    first_registration = pd.DataFrame(basket.groupby(by=['CustomerID'])['InvoiceDate'].min())
+    last_purchase      = pd.DataFrame(basket.groupby(by=['CustomerID'])['InvoiceDate'].max())
+    test  = first_registration.applymap(lambda x:(last_date - x.date()).days)
+    test2 = last_purchase.applymap(lambda x:(last_date - x.date()).days)
+    transactions_per_user.loc[:, 'LastPurchase'] = test2.reset_index(drop = False)['InvoiceDate']
+    transactions_per_user.loc[:, 'FirstPurchase'] = test.reset_index(drop = False)['InvoiceDate']
+
+    transactions_per_user[:5]
+
+    # Our data encoding
+    list_cols = ['count','min','max','mean','categ_0','categ_1','categ_2','categ_3','categ_4']
+    selected_customers = transactions_per_user.copy(deep = True)
+    matrix = selected_customers[list_cols].to_numpy()
+
+    # Here we found the variables means
+    scaler = StandardScaler()
+    scaler.fit(matrix)
+    print('variables mean values: \n' + 90*'-' + '\n' , scaler.mean_)
+    scaled_matrix = scaler.transform(matrix)
+
+    # Here we are making categories of customers so we can predict then better
+    n_clusters = 11
+    kmeans = KMeans(init='k-means++', n_clusters = n_clusters, n_init=100)
+    kmeans.fit(scaled_matrix)
+    clusters_clients = kmeans.predict(scaled_matrix)
+
+    # Here we evalutate the clustering by the silhouette score
+    silhouette_avg = silhouette_score(scaled_matrix, clusters_clients)
+    print('Silhouette Score: {:<.3f}'.format(silhouette_avg))
+
+    # Here we see the number of clients in each category after the classification of them
+    pd.DataFrame(pd.Series(clusters_clients).value_counts(), columns = ['Number of clients in each category']).T
+
+    # Here we impelemented a report via pca to see the content of the clusters that we did
+    pca = PCA(n_components=6)
+    matrix_3D = pca.fit_transform(scaled_matrix)
+    mat = pd.DataFrame(matrix_3D)
+    mat['cluster'] = pd.Series(clusters_clients)
+
+    # Here we are presenting the above data and is a function  that we found on sklearn-documentation
+    # PCA is is a tool which  is used to reduce the high dimensional dataset to lower-dimensional 
+    # dataset without losing the information from it.
+    sns.set_style("white")
+    sns.set_context("notebook", font_scale=1, rc={"lines.linewidth": 2.5})
+
+    LABEL_COLOR_MAP = {0:'r', 1:'tan', 2:'b', 3:'k', 4:'c', 5:'g', 6:'deeppink', 7:'skyblue', 8:'darkcyan', 9:'orange',
+                    10:'yellow', 11:'tomato', 12:'seagreen'}
+    label_color = [LABEL_COLOR_MAP[l] for l in mat['cluster']]
+
+    fig = plt.figure(figsize = (12,10))
+    increment = 0
+    for ix in range(6):
+        for iy in range(ix+1, 4):   
+            increment += 1
+            ax = fig.add_subplot(4,3,increment)
+            ax.scatter(mat[ix], mat[iy], c= label_color, alpha=0.5) 
+            plt.ylabel('PCA {}'.format(iy+1), fontsize = 12)
+            plt.xlabel('PCA {}'.format(ix+1), fontsize = 12)
+            ax.yaxis.grid(color='lightgray', linestyle=':')
+            ax.xaxis.grid(color='lightgray', linestyle=':')
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            
+            if increment == 12: break
+        if increment == 12: break
+            
+    #_______________________________________________
+    # I set the legend: abreviation -> airline name
+    comp_handler = []
+    for i in range(n_clusters):
+        comp_handler.append(mpatches.Patch(color = LABEL_COLOR_MAP[i], label = i))
+
+    plt.legend(handles=comp_handler, bbox_to_anchor=(1.1, 0.9), 
+            title='Cluster', facecolor = 'lightgrey',
+            shadow = True, frameon = True, framealpha = 1,
+            fontsize = 13, bbox_transform = plt.gcf().transFigure)
+
+    plt.tight_layout()
+
+    # Here we find the cluster that each client belongs and put it to the final dataframe
+    selected_customers.loc[:, 'cluster'] = clusters_clients
+
+    # We average the contents of this dataframe by first selecting the different groups of clients.
+    merged_df = pd.DataFrame()
+    for i in range(n_clusters):
+        test = pd.DataFrame(selected_customers[selected_customers['cluster'] == i].mean())
+        test = test.T.set_index('cluster', drop = True)
+        test['size'] = selected_customers[selected_customers['cluster'] == i].shape[0]
+        merged_df = pd.concat([merged_df, test])
+    #_____________________________________________________
+    merged_df.drop('CustomerID', axis = 1, inplace = True)
+    print('Number of customers:', merged_df['size'].sum())
+
+    merged_df = merged_df.sort_values('sum')
+
+    # We re-organized the content of the dataframe by ordering the different clusters to find the finalized dataset to be train
+    list_index = []
+
+    list_index_reordered = list_index
+    list_index_reordered += [ s for s in merged_df.index if s not in list_index]
+
+    merged_df = merged_df.reindex(index = list_index_reordered)
+    merged_df = merged_df.reset_index(drop = False)
+
+    display(merged_df[['cluster', 'count', 'min', 'max', 'mean', 'sum', 'categ_0',
+                        'categ_1', 'categ_2', 'categ_3', 'categ_4', 'size']])
 
 #   ===================
 #   LEFT SIDEBAR COLUMN
@@ -484,15 +700,15 @@ radioBtn = st.sidebar.radio("Steps for Customer Segmentation", radioBtnOptions, 
 
 if(radioBtn == "Data Preparation"):
     dataPreperation()
-elif(radioBtn == "Exploring the content of variables"):
+if(radioBtn == "Exploring the content of variables"):
     secondTab()
-elif(radioBtn == "Inside on product categories"):
-    thirdTab()
-elif(radioBtn == "Customer Categories"):
-    st.write("4")
-elif(radioBtn == "Classifying Customers"):
+if(radioBtn == "Inside on product categories"):
+    cluster = thirdTab()
+if(radioBtn == "Customer Categories"):
+    fourthTab()
+if(radioBtn == "Classifying Customers"):
     st.write("5")
-elif(radioBtn == "Testing the predictions"):
+if(radioBtn == "Testing the predictions"):
     st.write("6")
 
 
