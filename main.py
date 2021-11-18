@@ -41,10 +41,8 @@ def dataPreperation():
     st.write("Those are the inports we used.")
     st.code("imports...")
     st.write("We first load the data and we give some informations on the content of the dataframe such as the type of the various variables, the number of null values and their percentage with respect to the total number of entries.")
-    st.code("code for data preperation")
-    if st.button("Run Code for Data Preperation"):
-        runCodeDataPreperation()
 
+ 
 
 #   RUN CODE FOR DATA PREPARATION
 
@@ -590,7 +588,7 @@ def runCodeForSection4():
     # Here we found the variables means
     scaler = StandardScaler()
     scaler.fit(matrix)
-    print('variables mean values: \n' + 90*'-' + '\n' , scaler.mean_)
+    st.write('variables mean values: \n' + 90*'-' + '\n' , scaler.mean_)
     scaled_matrix = scaler.transform(matrix)
 
     # Here we are making categories of customers so we can predict then better
@@ -601,7 +599,7 @@ def runCodeForSection4():
 
     # Here we evalutate the clustering by the silhouette score
     silhouette_avg = silhouette_score(scaled_matrix, clusters_clients)
-    print('Silhouette Score: {:<.3f}'.format(silhouette_avg))
+    st.write('Silhouette Score: {:<.3f}'.format(silhouette_avg))
 
     # Here we see the number of clients in each category after the classification of them
     pd.DataFrame(pd.Series(clusters_clients).value_counts(), columns = ['Number of clients in each category']).T
@@ -664,7 +662,7 @@ def runCodeForSection4():
         merged_df = pd.concat([merged_df, test])
     #_____________________________________________________
     merged_df.drop('CustomerID', axis = 1, inplace = True)
-    print('Number of customers:', merged_df['size'].sum())
+    st.write('Number of customers:', merged_df['size'].sum())
 
     merged_df = merged_df.sort_values('sum')
 
@@ -677,8 +675,60 @@ def runCodeForSection4():
     merged_df = merged_df.reindex(index = list_index_reordered)
     merged_df = merged_df.reset_index(drop = False)
 
-    display(merged_df[['cluster', 'count', 'min', 'max', 'mean', 'sum', 'categ_0',
+    st.write(merged_df[['cluster', 'count', 'min', 'max', 'mean', 'sum', 'categ_0',
                         'categ_1', 'categ_2', 'categ_3', 'categ_4', 'size']])
+
+    pd.DataFrame(selected_customers).to_csv('selected_customers.csv')
+
+#   ==========
+#   FIFTH TAB
+#   ==========
+def fifthTab():
+    st.subheader("5. Classifying customers")
+    
+    if st.button("run code"):
+        runCodeForSection5()
+
+def runCodeForSection5():
+    selected_customers = pd.read_csv("selected_customers.csv",encoding='unicode_escape')
+    
+    class Class_Fit(object):
+        def __init__(self, clf, params=None):
+            if params:            
+                self.clf = clf(**params)
+            else:
+                self.clf = clf()
+
+        def train(self, x_train, y_train):
+            self.clf.fit(x_train, y_train)
+
+        def predict(self, x):
+            return self.clf.predict(x)
+        
+        def grid_search(self, parameters, Kfold):
+            self.grid = GridSearchCV(estimator = self.clf, param_grid = parameters, cv = Kfold)
+            
+        def grid_fit(self, X, Y):
+            self.grid.fit(X, Y)
+            
+        def grid_predict(self, X, Y):
+            self.predictions = self.grid.predict(X)
+            st.write("Precision: {:.2f} % ".format(100*metrics.accuracy_score(Y, self.predictions)))
+
+    columns = ['mean', 'categ_0', 'categ_1', 'categ_2', 'categ_3', 'categ_4' ]
+    X = selected_customers[columns]
+    Y = selected_customers['cluster']
+    X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, train_size = 0.8)
+    # Initiate and run the Support Vector Machine with the help of a class because we have 2 algorithsm to run
+    svc = Class_Fit(clf = svm.LinearSVC)
+    svc.grid_search(parameters = [{'C':np.logspace(-2,2,10)}], Kfold = 5)
+    svc.grid_fit(X = X_train, Y = Y_train)
+    svc.grid_predict(X_test, Y_test)
+    # Initiate and run the K-Nearest-Neighbours with the help of a class because we have 2 algorithsm to run
+    knn = Class_Fit(clf = neighbors.KNeighborsClassifier)
+    knn.grid_search(parameters = [{'n_neighbors': np.arange(1,50,1)}], Kfold = 5)
+    knn.grid_fit(X = X_train, Y = Y_train)
+    knn.grid_predict(X_test, Y_test)
 
 #   ===================
 #   LEFT SIDEBAR COLUMN
@@ -707,7 +757,7 @@ if(radioBtn == "Inside on product categories"):
 if(radioBtn == "Customer Categories"):
     fourthTab()
 if(radioBtn == "Classifying Customers"):
-    st.write("5")
+    fifthTab()
 if(radioBtn == "Testing the predictions"):
     st.write("6")
 
