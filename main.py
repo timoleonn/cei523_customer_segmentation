@@ -488,6 +488,9 @@ def runCodeForSection4():
     dataframeClean = pd.read_csv("dataframeClean.csv",encoding='unicode_escape')
     description1 = pd.read_csv("description1.csv",encoding='unicode_escape').to_numpy()
     description1 = np.delete(description1, [0]).astype(str)
+
+    dataframeClean['InvoiceDate'] = pd.to_datetime(dataframeClean['InvoiceDate'])
+
     # clusters = pd.read_csv("clusters.csv")
 
     file = open("clusters.csv", "r")
@@ -497,24 +500,18 @@ def runCodeForSection4():
     for row in csv_reader:
         clusters1.append(row)
 
-    # st.write(np.array(clusters1))
-    # st.write(type(np.array(clusters1)))
-
-    # clusters = np.array(clusters1)
-    # st.write(type(description1))
-
-    clusters = np.delete(clusters1, [0]).astype(str)
-
+    clusters = np.delete(clusters1, [0])
 
     # Here we specify the category of each product for all of our records
     corresp = dict()
     for key, val in zip (description1, clusters):
         corresp[key] = val 
     dataframeClean['categ_product'] = dataframeClean.loc[:, 'Description'].map(corresp)
+    dataframeClean['categ_product'] = pd.to_numeric(dataframeClean['categ_product'])
 
     # Here we have the amount spent in each category for each product
     for i in range(5):
-        column = 'categ_{}'.format(i)        
+        column = 'categ_{}'.format(i)
         df_temp = dataframeClean[dataframeClean['categ_product'] == i]
         price_temp = df_temp['UnitPrice'] * (df_temp['Quantity'] - df_temp['QuantityCanceled'])
         price_temp = price_temp.apply(lambda x:x if x > 0 else 0)
@@ -651,6 +648,7 @@ def runCodeForSection4():
             fontsize = 13, bbox_transform = plt.gcf().transFigure)
 
     plt.tight_layout()
+    st.plotly_chart(fig)
 
     # Here we find the cluster that each client belongs and put it to the final dataframe
     selected_customers.loc[:, 'cluster'] = clusters_clients
@@ -745,8 +743,7 @@ radioBtnOptions = [ "Data Preparation",
                     "Exploring the content of variables",
                     "Inside on product categories",
                     "Customer Categories",
-                    "Classifying Customers",
-                    "Testing the predictions" ]
+                    "Classifying Customers",]
 
 radioBtn = st.sidebar.radio("Steps for Customer Segmentation", radioBtnOptions, 0)
 
@@ -760,7 +757,4 @@ if(radioBtn == "Customer Categories"):
     fourthTab()
 if(radioBtn == "Classifying Customers"):
     fifthTab()
-if(radioBtn == "Testing the predictions"):
-    st.write("6")
-
 
