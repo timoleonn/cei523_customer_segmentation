@@ -41,7 +41,8 @@ def dataPreperation():
     st.write("Those are the inports we used.")
     st.code("imports...")
     st.write("We first load the data and we give some informations on the content of the dataframe such as the type of the various variables, the number of null values and their percentage with respect to the total number of entries.")
-
+    if st.button("Prepare Data"):
+            runCodeDataPreperation()
  
 
 #   RUN CODE FOR DATA PREPARATION
@@ -160,6 +161,7 @@ def runCodeForSection2():
     geo = dict(showframe = True, projection={'type':'mercator'}))
     choromap = go.Figure(data = [data], layout = layout)
     iplot(choromap, validate=False)
+    st.pyplot(choromap)
 
     # We found all items
     items = len(dataframe['StockCode'].value_counts())
