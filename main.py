@@ -160,8 +160,7 @@ def runCodeForSection2():
     layout = dict(title='Order per Country',
     geo = dict(showframe = True, projection={'type':'mercator'}))
     choromap = go.Figure(data = [data], layout = layout)
-    iplot(choromap, validate=False)
-    st.pyplot(choromap)
+    st.plotly_chart(choromap)
 
     # We found all items
     items = len(dataframe['StockCode'].value_counts())
@@ -409,8 +408,6 @@ def runCodeForSection3():
         kmeans = KMeans(init = 'k-means++', n_clusters = n_clusters, n_init = 30)
         kmeans.fit(matrix)
         clusters = kmeans.predict(matrix)
-        # st.write("[WARNING]: \n")
-        # st.write(clusters)
         silhouette_avg = silhouette_score(matrix, clusters)
         
         st.write("For n_clusters = ", n_clusters, "The average silhouette_score is: ", silhouette_avg)
@@ -490,6 +487,7 @@ def runCodeForSection4():
     dataframe = pd.read_csv("newDataframe.csv",encoding='unicode_escape')
     dataframeClean = pd.read_csv("dataframeClean.csv",encoding='unicode_escape')
     description1 = pd.read_csv("description1.csv",encoding='unicode_escape').to_numpy()
+    description1 = np.delete(description1, [0]).astype(str)
     # clusters = pd.read_csv("clusters.csv")
 
     file = open("clusters.csv", "r")
@@ -499,18 +497,20 @@ def runCodeForSection4():
     for row in csv_reader:
         clusters1.append(row)
 
-    st.write(np.array(clusters1))
-    st.write(type(np.array(clusters1)))
+    # st.write(np.array(clusters1))
+    # st.write(type(np.array(clusters1)))
 
-    clusters = np.array(clusters1)
-    st.write(type(description1))
+    # clusters = np.array(clusters1)
+    # st.write(type(description1))
+
+    clusters = np.delete(clusters1, [0]).astype(str)
 
 
-    # # Here we specify the category of each product for all of our records
-    # corresp = dict()
-    # for key, val in zip (description1, clusters):
-    #     corresp[key] = val 
-    # dataframeClean['categ_product'] = dataframeClean.loc[:, 'Description'].map(corresp)
+    # Here we specify the category of each product for all of our records
+    corresp = dict()
+    for key, val in zip (description1, clusters):
+        corresp[key] = val 
+    dataframeClean['categ_product'] = dataframeClean.loc[:, 'Description'].map(corresp)
 
     # Here we have the amount spent in each category for each product
     for i in range(5):
