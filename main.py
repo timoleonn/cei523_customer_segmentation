@@ -720,11 +720,13 @@ def runCodeForSection5():
     Y = selected_customers['cluster']
     X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, train_size = 0.8)
     # Initiate and run the Support Vector Machine with the help of a class because we have 2 algorithsm to run
+    st.caption("Prediction using LinearSVC")
     svc = Class_Fit(clf = svm.LinearSVC)
     svc.grid_search(parameters = [{'C':np.logspace(-2,2,10)}], Kfold = 5)
     svc.grid_fit(X = X_train, Y = Y_train)
     svc.grid_predict(X_test, Y_test)
     # Initiate and run the K-Nearest-Neighbours with the help of a class because we have 2 algorithsm to run
+    st.caption("Prediction using KNeighborsClassifier")
     knn = Class_Fit(clf = neighbors.KNeighborsClassifier)
     knn.grid_search(parameters = [{'n_neighbors': np.arange(1,50,1)}], Kfold = 5)
     knn.grid_fit(X = X_train, Y = Y_train)
