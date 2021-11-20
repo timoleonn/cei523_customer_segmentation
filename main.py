@@ -125,7 +125,7 @@ def secondTab():
     
     st.write("This is our code for this section")
     st.code("")
-    if st.button("run code"):
+    if st.button("Run Code"):
         runCodeForSection2()
         
 def runCodeForSection2():
@@ -291,8 +291,9 @@ def runCodeForSection2():
 #   ==========
 def thirdTab():
     st.subheader("3. Insight on product categories")
+    st.write("**The StockCode variable in the dataframe is used to uniquely identify goods. The Description variable contains a brief description of the products. In this section, we aim to utilize the content of the latter variable to categorize the products.**")
     
-    if st.button("run code"):
+    if st.button("Run Code"):
         return runCodeForSection3()
 
 def runCodeForSection3():
@@ -301,6 +302,8 @@ def runCodeForSection3():
     dataframeClean = pd.read_csv("dataframeClean.csv",encoding='unicode_escape')
 
     # Here we have the function that we are going to use to find usefull information from the description of each product
+    st.write("**We now try to find usefull information from the description of each product. **")
+    st.write("**We use NLTK (Natural Language Toolkit), which is basically a suite of libraries for symbolic and statistical natural language processing.**")
     def keywords(dataframe):
         stemmer = nltk.stem.SnowballStemmer("english")
         keywords_roots  = dict()  
@@ -339,6 +342,7 @@ def runCodeForSection3():
         return category_keys, keywords_roots, keywords_select, count_keywords
 
     # We are taking the unique descriptions to avoid the duplicates
+    st.write("**Now, we take the unique keywords that we gathered from all of the descriptions and we create a new dataframe.**")
     dataframeProducts = pd.DataFrame(dataframe['Description'].unique()).rename(columns = {0:'Description'})
 
     # We are running the function we constructed above to fing the keywords
@@ -352,6 +356,7 @@ def runCodeForSection3():
     list1 = sorted(list_products, key = lambda x:x[1], reverse = True)
 
     # Here we make a sketch to see the 50 keywords with larger occurence number
+    st.write("**Now we create a graph that shows 50 keywords with larger occurence number in the 'data.csv' file.**")
     plt.rc('font', weight='normal')
     fig, ax = plt.subplots(figsize=(7, 25))
     y_axis = [i[1] for i in list1[:50]]
@@ -365,11 +370,11 @@ def runCodeForSection3():
     ax = plt.gca()
     ax.invert_yaxis()
     plt.title("Words occurence",bbox={'facecolor':'k', 'pad':5}, color='w',fontsize = 8)
-    # plt.show()
     st.pyplot(fig)
 
     # Here we remove some words that we saw inside the keywords and was colours or had special characters and keep only the
     # keywords which is larger than 3 characters to avoid some spowords and keywords that appears more than 13 times
+    st.write("**After close observation of the graph we just created, we noticed that there were some words such as colours or words with special characters. We need to remove these words.**")
     new_list_products = []
     for key,value in count_keywords.items():
         word = keywords_select[key]
@@ -383,7 +388,7 @@ def runCodeForSection3():
     new_list_products.sort(key = lambda x:x[1], reverse = True)
     st.write('Remaining words: ',len(new_list_products))
 
-    # We used the keywrods to create groups of products and encode our data with 1 hot encoding
+    # We used the keywords to create groups of products and encode our data with 1 hot encoding
     description1 = dataframeClean['Description'].unique()
     X = pd.DataFrame()
     for key, occurence in new_list_products:
@@ -391,6 +396,7 @@ def runCodeForSection3():
 
     # We check for how many clusters is better for our data base on silouette score which is show us 
     # if the clusters are well apart from each other and clearly distinguished
+    st.write("**We then check how many clusters would be better for our data, based on the silhouette score. This will then show us if the clusters are well apart from each other and clearly distinguished.**")
     matrix = X.values
     for n_clusters in range(3, 10):
         kmeans = KMeans(init = 'k-means++', n_clusters = n_clusters, n_init = 30)
@@ -402,6 +408,8 @@ def runCodeForSection3():
     # We decided to take 5 clusters because when we chose to proceed with more cluster we saw that many clusters had only a few
     # words and if we choose less than 3 we will go to binary classification and we dont want it
     # Here we are itterating the process until we obtain a good sillouette average which is arround 0.1+-0.05
+    st.write("**Using more than 5 clusters, we saw that we only had a few words. Using less than 3 clusters, we noticed that we will go to binary classification (which we don't want).**")
+    st.write("**Therefore, we chose to use 5 clusters.**")
     n_clusters = 5
     silhouette_avg = -1
     while silhouette_avg < 0.145:
@@ -427,6 +435,7 @@ def runCodeForSection3():
             
             
 
+    st.write("**Here we can see the 5 clusters that we have created.**")
     #________________________________________________________________________
     def random_color_func(word=None, font_size=None, position=None,
                         orientation=None, font_path=None, random_state=None):
@@ -469,8 +478,8 @@ def runCodeForSection3():
     # Save Dataframe to csv so we can use in other sections
     pd.DataFrame(description1).to_csv('description1.csv')
     pd.DataFrame(clusters).to_csv('clusters.csv')
-    st.write(type(clusters))
-    st.write(clusters)
+
+    st.write("**Now, we move onto the next section, which is the Customer Categories.**")
             
 
 #   ==========
@@ -478,8 +487,9 @@ def runCodeForSection3():
 #   ==========
 def fourthTab():
     st.subheader("4. Customer categories")
-    
-    if st.button("run code"):
+    st.write("**In this section, we need the data to be in the appropriate format in order to create customer categories.**")
+
+    if st.button("Run Code"):
         runCodeForSection4()
 
 def runCodeForSection4():
@@ -685,8 +695,9 @@ def runCodeForSection4():
 #   ==========
 def fifthTab():
     st.subheader("5. Classifying customers")
+    st.write("**The goal of this section will be to fine-tune a classifier that will classify customers into the various client groups created in the previous section. The goal is to have this categorization available on the first visit. To begin, we constructed a class that allows us to interface some of the functions shared by two algorithms in order to ease their use**")
     
-    if st.button("run code"):
+    if st.button("Run Code"):
         runCodeForSection5()
 
 def runCodeForSection5():
@@ -720,13 +731,13 @@ def runCodeForSection5():
     Y = selected_customers['cluster']
     X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, train_size = 0.8)
     # Initiate and run the Support Vector Machine with the help of a class because we have 2 algorithsm to run
-    st.caption("Prediction using LinearSVC")
+    st.write("**Prediction using LinearSVC**")
     svc = Class_Fit(clf = svm.LinearSVC)
     svc.grid_search(parameters = [{'C':np.logspace(-2,2,10)}], Kfold = 5)
     svc.grid_fit(X = X_train, Y = Y_train)
     svc.grid_predict(X_test, Y_test)
     # Initiate and run the K-Nearest-Neighbours with the help of a class because we have 2 algorithsm to run
-    st.caption("Prediction using KNeighborsClassifier")
+    st.write("**Prediction using KNeighborsClassifier**")
     knn = Class_Fit(clf = neighbors.KNeighborsClassifier)
     knn.grid_search(parameters = [{'n_neighbors': np.arange(1,50,1)}], Kfold = 5)
     knn.grid_fit(X = X_train, Y = Y_train)
@@ -743,7 +754,7 @@ col1, col2, col3, col4 = st.columns(4)
 st.sidebar.title("Contents")
 radioBtnOptions = [ "Data Preparation",
                     "Exploring the content of variables",
-                    "Inside on product categories",
+                    "Insight on product categories",
                     "Customer Categories",
                     "Classifying Customers",]
 
@@ -753,7 +764,7 @@ if(radioBtn == "Data Preparation"):
     dataPreperation()
 if(radioBtn == "Exploring the content of variables"):
     secondTab()
-if(radioBtn == "Inside on product categories"):
+if(radioBtn == "Insight on product categories"):
     cluster = thirdTab()
 if(radioBtn == "Customer Categories"):
     fourthTab()
