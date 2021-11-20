@@ -39,7 +39,38 @@ import csv
 def dataPreperation():
     st.subheader("Data Preperation")
     st.write("Those are the inports we used.")
-    st.code("imports...")
+    st.code("import plotly.express as px\n"
+    "import pandas as pd\n"
+    "import numpy as np\n"
+    "import matplotlib as mpl\n"
+    "import matplotlib.pyplot as plt\n"
+    "import seaborn as sns\n"
+    "import datetime, nltk, warnings\n"
+    "nltk.download('punkt')\n"
+    "nltk.download('averaged_perceptron_tagger')\n"
+    "import matplotlib.cm as cm\n"
+    "import itertools\n"
+    "from sklearn.preprocessing import StandardScaler\n"
+    "from sklearn.cluster import KMeans\n"
+    "from sklearn.metrics import silhouette_samples, silhouette_score\n"
+    "from sklearn import preprocessing, model_selection, metrics\n"
+    "from sklearn.model_selection import GridSearchCV\n"
+    "from sklearn.svm import SVC\n"
+    "from sklearn.metrics import confusion_matrix\n"
+    "from sklearn import neighbors, linear_model, svm\n"
+    "from wordcloud import WordCloud, STOPWORDS\n"
+    "from sklearn.decomposition import PCA\n"
+    "from IPython.display import display\n"
+    "import plotly.graph_objs as go\n"
+    "from plotly.offline import init_notebook_mode,iplot\n"
+    "import matplotlib.patches as mpatches\n"
+    "init_notebook_mode(connected=True)\n"
+    "warnings.filterwarnings('ignore')\n"
+    "plt.rcParams['patch.force_edgecolor'] = True\n"
+    "plt.style.use('fivethirtyeight')\n"
+    "mpl.rc('patch', edgecolor = 'dimgray', linewidth=1)\n"
+    "import csv")
+
     st.write("We first load the data and we give some informations on the content of the dataframe such as the type of the various variables, the number of null values and their percentage with respect to the total number of entries.")
     if st.button("Prepare Data"):
             runCodeDataPreperation()
@@ -55,7 +86,7 @@ def runCodeDataPreperation():
     dataframe['Country']=dataframe['Country'].astype('string')
     dataframe['CustomerID']=dataframe['CustomerID'].astype('string')
 
-    # See how many rows and columns has the dataframe
+    st.markdown("**Here we see how many rows and columns has the dataframe**")
     st.write('Dimensions:', dataframe.shape)
 
     # Make the date time from object to date time
@@ -67,10 +98,10 @@ def runCodeDataPreperation():
     # Append the sum of null values for each column
     dataframeTypeInfo=dataframeTypeInfo.append(pd.DataFrame(dataframe.isna().sum()).T.rename(index={0:'Null values'}))
 
-    # Print the dataframe implemented above
+    st.markdown("**Print the dataframe implemented above**")
     st.dataframe(dataframeTypeInfo.astype(str))
 
-    # Print the initial dataframe head ( 5 rows )
+    st.markdown("**Print the initial dataframe head**")
     st.dataframe(dataframe.head().astype(str))
     
     # Find the values of invoice numbers which CustomerID is not null
@@ -79,6 +110,15 @@ def runCodeDataPreperation():
     # Find the values of invoice numbers which CustomerID is null
     customerIDEmpty = dataframe['InvoiceNo'].where(dataframe['CustomerID'].isna())
 
+    st.write("**Now we will check if CustomerID has common values and remove them.**")
+    st.code("check = []\n"
+            "for id in customerIDFilled.unique():\n"
+            "    if id in customerIDEmpty:\n"
+            "       check.append(id)\n\n"
+            "if (len(check)==0):\n"
+            "   st.write('We dont have any related data into the 2 lists of ids so we drop the empty CustomerIDs')\n"
+            "else:\n"
+            "   st.write(check)\n")
     # Run a small programm to see if there are common values so we can find the null CustomerID
     check = []
     for id in customerIDFilled.unique():
@@ -100,13 +140,17 @@ def runCodeDataPreperation():
     dataframe['CustomerID']=dataframe['CustomerID'].astype('float') 
     dataframe['CustomerID']=dataframe['CustomerID'].astype('int') 
 
-    # We check for duplicate values inside the our dataframe 
+    st.write("**We check for duplicate values inside the our dataframe**")
+    st.code("st.write('Duplicates: {}'.format(dataframe.duplicated().sum()))")
     st.write('Duplicates: {}'.format(dataframe.duplicated().sum()))
 
+    st.write("**Because we have duplicated values and are not useful for our data we delete them.**")
+    st.code("dataframe.drop_duplicates(inplace = True)")
     # Duplicates are not usefull data so we drop them
     dataframe.drop_duplicates(inplace = True)
 
     # Save Dataframe to csv so we can use in other sections
+    st.write("**This is the end for the Data Preparation.**")
     dataframe.to_csv('newDataframe.csv')
 
 
@@ -122,9 +166,7 @@ def secondTab():
             "**UnitPrice:** Unit price. Numeric, Product price per unit in sterling.\n\n"
             "**CustomerID:** Customer number. Nominal, a 5-digit integral number uniquely assigned to each customer.\n\n"
             "**Country:** Country name. Nominal, the name of the country where each customer resides.")
-    
-    st.write("This is our code for this section")
-    st.code("")
+
     if st.button("Run Code"):
         runCodeForSection2()
         
@@ -144,6 +186,7 @@ def runCodeForSection2():
     countries = temp['Country'].value_counts()
 
     # We st.write the column of countries
+    st.write("**This is all the countries we have in our dataset.**")
     st.write(countries)
 
     # Visualization of the Countries
@@ -157,7 +200,7 @@ def runCodeForSection2():
                 [0.10, '#ff2929'], [0.20, '#ff0f0f'],
                 [1, '#9e0000']],    
     reversescale = False)
-    layout = dict(title='Order per Country',
+    layout = dict(title='The following map showing the Orders per Country',
     geo = dict(showframe = True, projection={'type':'mercator'}))
     choromap = go.Figure(data = [data], layout = layout)
     st.plotly_chart(choromap)
@@ -172,6 +215,7 @@ def runCodeForSection2():
     customers = len(dataframe['CustomerID'].value_counts())
 
     # Initiate a dataframe with the above 3 columns and the word ammount as our metric
+    st.write("**The following table is showing how many items,order and customers we have in our dataset.**")
     numOfCustAndProd = pd.DataFrame([{'Items':items,'Orders':orders,'Customers':customers}], columns = ['Items', 'Orders', 'Customers'], index=['Amount'])
     st.write(numOfCustAndProd)
 
@@ -180,13 +224,19 @@ def runCodeForSection2():
 
     # We renamed the column invoice date as a number of products because then we would have the amount of products with column
     # name InvoiceDate
+    st.write("**Here we show the first five records of the number of products a customer has order per Invoice**")
     productsPerOrder =productsPerOrder.rename(columns = {'InvoiceDate':'# of products'})
     st.write(productsPerOrder.sort_values('CustomerID').head())
 
     # We assume that the C in front of the InvoiceNo is the "Cancel" as we can see from the output that we take when we group
     # the purchases of each customer as the rows are the same and only the quantity is negative and the C character
     productsPerOrder['Canceled Order'] = productsPerOrder['InvoiceNo'].apply(lambda x: 1 if 'C' in x else 0)
+    st.write("**We assume that the 'C'in front of the InvoiceNo is the 'Cancel' as we can see from the output that we take when we group**\n"
+             "**the purchases of each customer as the rows are the same and only the quantity is negative and the C character.**\n")
+
     st.write(productsPerOrder.sort_values('CustomerID').head())
+    st.write("**We find the canceled orders using the following code.**")
+    st.code("format(productsPerOrder['Canceled Order'].sum())")
     st.write("The ammount of canceled orders is {}".format(productsPerOrder['Canceled Order'].sum()))
     st.write(dataframe.sort_values('CustomerID')[:10])
 
@@ -194,6 +244,9 @@ def runCodeForSection2():
     # and the other if we have same recocords but the one has negative value and the other the same value but positive
     # We see that there are cancelled orders alone, cancelled orders with counterparts and other with various counterparts
     # We will run this code and take the results to show to the class because of its time which wants to run
+    st.write("**Now we will make a loop through all our data and find the orders which are cancelled and delete them.**\n"
+             "**We will do the same with the same records that have negative or positive values.**")
+    st.caption("This loop will take some time as it has to go throw half a million data.")
     discount = []
     cancellation = []
     dataframeClean = dataframe.copy(deep = True)
@@ -228,6 +281,10 @@ def runCodeForSection2():
     st.write("Discount: {}".format(len(discount)))
 
     # Here we check for the entries  of cancellations that we left from the process before
+    st.write("**Now we will check for the entries of the cancellations that we left from the process before.**")
+    st.code("dataframeClean.drop(cancellation, axis = 0, inplace = True)\n"
+            "dataframeClean.drop(discount, axis = 0, inplace = True)\n"
+            "remaining_entries = dataframeClean[(dataframeClean['Quantity'] < 0) & (dataframeClean['StockCode'] != 'D')]")
     dataframeClean.drop(cancellation, axis = 0, inplace = True)
     dataframeClean.drop(discount, axis = 0, inplace = True)
     remaining_entries = dataframeClean[(dataframeClean['Quantity'] < 0) & (dataframeClean['StockCode'] != 'D')]
@@ -235,10 +292,12 @@ def runCodeForSection2():
     remaining_entries[:5]
 
     # Stock Code which indicates a transaction type
+    st.write("Stock Codes which indicates a transaction type")
     special_codes = dataframeClean[dataframeClean['StockCode'].str.contains('^[a-zA-Z]+', regex=True)]['StockCode'].unique()
     st.write(special_codes)
 
     # Basket Price
+    st.write("This is our Basket Prices")
     dataframeClean['TotalPrice'] = dataframeClean['UnitPrice'] * (dataframeClean['Quantity'] - dataframeClean['QuantityCanceled'])
     st.write(dataframeClean.sort_values('CustomerID')[:5])
 
@@ -254,6 +313,7 @@ def runCodeForSection2():
 
     # Here we take care of the minimum and maximum values to find ranges to present the percentage of orders that has a specific
     # ammount paid
+    st.write("**Here we take care of the minimum and maximum values to find ranges to present the percentage of orders that has a specific ammount paid**")
     st.write("Maximum total price of order",basket['Basket Price'].max())
     st.write("Minimum total price of order",basket['Basket Price'].min())
 
@@ -271,6 +331,7 @@ def runCodeForSection2():
     dataframe.to_csv('newDataframe.csv')
 
     # Pie chart of the above results
+    st.write("**This is a Pie Chart of the above results - The amount of orders.**")
     plt.rc('font', weight='bold')
     f, ax = plt.subplots(figsize=(11, 6))
     colors = ['red', 'yellow', 'orange', 'grey', 'blue', 'green','brown']
@@ -281,7 +342,7 @@ def runCodeForSection2():
         autopct = lambda x:'{:1.0f}%'.format(x) if x > 1 else '',
         shadow = False, startangle=0)
     ax.axis('equal')
-    f.text(0.5, 1.01, "Répartition des montants des commandes", ha='center', fontsize = 18);
+    f.text(0.5, 1.01, "Breakdown of order amounts", ha='center', fontsize = 18);
     
     st.pyplot(f)
 
@@ -520,6 +581,7 @@ def runCodeForSection4():
     dataframeClean['categ_product'] = pd.to_numeric(dataframeClean['categ_product'])
 
     # Here we have the amount spent in each category for each product
+    st.write("**Here we have the amount spent in each category for each product.**")
     for i in range(5):
         column = 'categ_{}'.format(i)
         df_temp = dataframeClean[dataframeClean['categ_product'] == i]
@@ -530,6 +592,7 @@ def runCodeForSection4():
     dataframeClean[['InvoiceNo', 'Description', 'categ_product', 'categ_0', 'categ_1', 'categ_2', 'categ_3','categ_4']][:5]
 
     # Here we did again the total basket price for all invoices
+    st.write("**Here we did again the total basket price for all invoices**")
     temp = dataframeClean.groupby(['CustomerID', 'InvoiceNo'], as_index=False)['TotalPrice'].sum()
     basket = temp.rename(columns = {'TotalPrice':'Basket Price'})
 
@@ -547,7 +610,7 @@ def runCodeForSection4():
     basket.insert(loc=6,column='categ_3',value=temp3['categ_3'])
     basket.insert(loc=7,column='categ_4',value=temp4['categ_4'])
 
-    # Here we take into accoung the date and time of the orders
+    # Here we take into account the date and time of the orders
     dataframeClean['InvoiceDate_int'] = dataframeClean['InvoiceDate'].astype('int64')
     temp = dataframeClean.groupby(by=['CustomerID', 'InvoiceNo'], as_index=False)['InvoiceDate_int'].mean()
     dataframeClean.drop('InvoiceDate_int', axis = 1, inplace = True)
@@ -561,6 +624,7 @@ def runCodeForSection4():
     basket = set_entrainement.copy(deep = True)
 
     # Here we find the max, the min and the mean of each customer transaction per user per category
+    st.write("**Here we find the max, the min and the mean of each customer transaction per user per category**")
     transactions_per_user=basket.groupby(by=['CustomerID'])['Basket Price'].agg(['count','min','max','mean','sum'])
     temp0 = basket.groupby(by=['CustomerID'])['categ_0'].sum()/transactions_per_user['sum']*100
     temp1 = basket.groupby(by=['CustomerID'])['categ_1'].sum()/transactions_per_user['sum']*100
@@ -578,7 +642,8 @@ def runCodeForSection4():
     transactions_per_user.reset_index(drop = False, inplace = True)
     transactions_per_user.sort_values('CustomerID', ascending = True)[:5]
 
-    # Here we are going to use the invoice date to find the days after last purchases and the days after first purchases 
+    # Here we are going to use the invoice date to find the days after last purchases and the days after first purchases
+    st.write("**Here we are going to use the invoice date to find the days after last purchases and the days after first purchases **")
     last_date = basket['InvoiceDate'].max().date()
     first_registration = pd.DataFrame(basket.groupby(by=['CustomerID'])['InvoiceDate'].min())
     last_purchase      = pd.DataFrame(basket.groupby(by=['CustomerID'])['InvoiceDate'].max())
@@ -607,10 +672,12 @@ def runCodeForSection4():
     clusters_clients = kmeans.predict(scaled_matrix)
 
     # Here we evalutate the clustering by the silhouette score
+    st.write("**Here we evaluate the clustering by the silhouette score**")
     silhouette_avg = silhouette_score(scaled_matrix, clusters_clients)
     st.write('Silhouette Score: {:<.3f}'.format(silhouette_avg))
 
     # Here we see the number of clients in each category after the classification of them
+    st.write("**Here we see the number of clients in each category after the classification of them**")
     pd.DataFrame(pd.Series(clusters_clients).value_counts(), columns = ['Number of clients in each category']).T
 
     # Here we impelemented a report via pca to see the content of the clusters that we did
@@ -622,6 +689,8 @@ def runCodeForSection4():
     # Here we are presenting the above data and is a function  that we found on sklearn-documentation
     # PCA is is a tool which  is used to reduce the high dimensional dataset to lower-dimensional 
     # dataset without losing the information from it.
+    st.write("**Here we are presenting the above data and is a function  that we found on sklearn-documentation**\n"
+             "**PCA is is a tool which  is used to reduce the high dimensional dataset to lower-dimensional dataset without losing the information from it.**")
     sns.set_style("white")
     sns.set_context("notebook", font_scale=1, rc={"lines.linewidth": 2.5})
 
@@ -661,6 +730,7 @@ def runCodeForSection4():
     st.plotly_chart(fig)
 
     # Here we find the cluster that each client belongs and put it to the final dataframe
+    st.write("**Here we find the cluster that each client belongs and put it to the final dataframe**")
     selected_customers.loc[:, 'cluster'] = clusters_clients
 
     # We average the contents of this dataframe by first selecting the different groups of clients.
@@ -677,6 +747,7 @@ def runCodeForSection4():
     merged_df = merged_df.sort_values('sum')
 
     # We re-organized the content of the dataframe by ordering the different clusters to find the finalized dataset to be train
+    st.write("**We re-organized the content of the dataframe by ordering the different clusters to find the finalized dataset to be train**")
     list_index = []
 
     list_index_reordered = list_index
