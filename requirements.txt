@@ -3,3 +3,4 @@ matplotlib
 seaborn
 nltk
 sklearn
+wordcloud
