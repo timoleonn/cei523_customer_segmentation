@@ -38,7 +38,7 @@ import csv
 #   FIRST TAB
 def dataPreperation():
     st.subheader("Data Preperation")
-    st.write("Those are the inports we used.")
+    st.write("Those are the imports we used.")
     st.code("import plotly.express as px\n"
     "import pandas as pd\n"
     "import numpy as np\n"
@@ -73,8 +73,9 @@ def dataPreperation():
 
     st.write("We first load the data and we give some informations on the content of the dataframe such as the type of the various variables, the number of null values and their percentage with respect to the total number of entries.")
     if st.button("Prepare Data"):
+        with st.spinner('Please wait while the process finishes...'):
             runCodeDataPreperation()
- 
+        st.success('Done!')        
 
 #   RUN CODE FOR DATA PREPARATION
 
@@ -168,7 +169,9 @@ def secondTab():
             "**Country:** Country name. Nominal, the name of the country where each customer resides.")
 
     if st.button("Run Code"):
-        runCodeForSection2()
+        with st.spinner('Please wait while the process finishes...'):
+            runCodeForSection2()
+        st.success('Done!') 
         
 def runCodeForSection2():
     # Read Dataframe so we can use in other sections
@@ -355,7 +358,9 @@ def thirdTab():
     st.write("**The StockCode variable in the dataframe is used to uniquely identify goods. The Description variable contains a brief description of the products. In this section, we aim to utilize the content of the latter variable to categorize the products.**")
     
     if st.button("Run Code"):
-        return runCodeForSection3()
+        with st.spinner('Please wait while the process finishes...'):
+            runCodeForSection3()
+        st.success('Done!') 
 
 def runCodeForSection3():
     # Read Dataframe so we can use in other sections
@@ -551,7 +556,9 @@ def fourthTab():
     st.write("**In this section, we need the data to be in the appropriate format in order to create customer categories.**")
 
     if st.button("Run Code"):
-        runCodeForSection4()
+        with st.spinner('Please wait while the process finishes...'):
+            runCodeForSection4()
+        st.success('Done!') 
 
 def runCodeForSection4():
     # Read Dataframe so we can use in other sections
@@ -662,7 +669,8 @@ def runCodeForSection4():
     # Here we found the variables means
     scaler = StandardScaler()
     scaler.fit(matrix)
-    st.write('variables mean values: \n' + 90*'-' + '\n' , scaler.mean_)
+    st.write("**Variables mean values:**")
+    st.write(scaler.mean_)
     scaled_matrix = scaler.transform(matrix)
 
     # Here we are making categories of customers so we can predict then better
@@ -769,7 +777,10 @@ def fifthTab():
     st.write("**The goal of this section will be to fine-tune a classifier that will classify customers into the various client groups created in the previous section. The goal is to have this categorization available on the first visit. To begin, we constructed a class that allows us to interface some of the functions shared by two algorithms in order to ease their use**")
     
     if st.button("Run Code"):
-        runCodeForSection5()
+        with st.spinner('Please wait while the process finishes...'):
+            runCodeForSection5()
+        st.success('Done!')
+
 
 def runCodeForSection5():
     selected_customers = pd.read_csv("selected_customers.csv",encoding='unicode_escape')
@@ -795,7 +806,8 @@ def runCodeForSection5():
             
         def grid_predict(self, X, Y):
             self.predictions = self.grid.predict(X)
-            st.write("Precision: {:.2f} % ".format(100*metrics.accuracy_score(Y, self.predictions)))
+            # st.write("Precision: {:.2f} % ".format(100*metrics.accuracy_score(Y, self.predictions)))
+            st.metric("Precision", "{:.2f}%".format(100*metrics.accuracy_score(Y, self.predictions)), delta=None)
 
     columns = ['mean', 'categ_0', 'categ_1', 'categ_2', 'categ_3', 'categ_4' ]
     X = selected_customers[columns]
@@ -818,6 +830,7 @@ def runCodeForSection5():
 #   LEFT SIDEBAR COLUMN
 #   ===================
 
+st.set_page_config(page_title="Customer Segmentation | Group 2 Team 2", page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
 st.title('Customer Segmentation')
 
 col1, col2, col3, col4 = st.columns(4)
