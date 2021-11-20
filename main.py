@@ -75,7 +75,7 @@ def dataPreperation():
     if st.button("Prepare Data"):
         with st.spinner('Please wait while the process finishes...'):
             runCodeDataPreperation()
-        st.success('Done!')        
+        st.success('Done! Please move to the next section!')        
 
 #   RUN CODE FOR DATA PREPARATION
 
@@ -171,7 +171,7 @@ def secondTab():
     if st.button("Run Code"):
         with st.spinner('Please wait while the process finishes...'):
             runCodeForSection2()
-        st.success('Done!') 
+        st.success('Done! Please move to the next section!') 
         
 def runCodeForSection2():
     # Read Dataframe so we can use in other sections
@@ -360,7 +360,7 @@ def thirdTab():
     if st.button("Run Code"):
         with st.spinner('Please wait while the process finishes...'):
             runCodeForSection3()
-        st.success('Done!') 
+        st.success('Done! Please move to the next section!') 
 
 def runCodeForSection3():
     # Read Dataframe so we can use in other sections
@@ -558,7 +558,7 @@ def fourthTab():
     if st.button("Run Code"):
         with st.spinner('Please wait while the process finishes...'):
             runCodeForSection4()
-        st.success('Done!') 
+        st.success('Done! Please move to the next section!') 
 
 def runCodeForSection4():
     # Read Dataframe so we can use in other sections
