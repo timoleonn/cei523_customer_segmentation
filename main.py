@@ -241,8 +241,6 @@ def runCodeForSection2():
     st.write("**We find the canceled orders using the following code.**")
     st.code("format(productsPerOrder['Canceled Order'].sum())")
     st.write("The ammount of canceled orders is {}".format(productsPerOrder['Canceled Order'].sum()))
-
-    dataframe = np.delete(dataframe, [0])
     st.write(dataframe.sort_values('CustomerID')[:10])
 
     # With this loop we want to examine the dataset and find the orders which are going to delete because its canceled
