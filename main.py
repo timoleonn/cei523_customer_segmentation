@@ -856,3 +856,15 @@ if(radioBtn == "Customer Categories"):
 if(radioBtn == "Classifying Customers"):
     fifthTab()
 
+expanderLabel = "Credits"
+expanderBody = """
+This app is the result of hard work by our team:
+- Charilaou Timoleon
+- Georgiou Evangelos
+- Nikidiotis Thoma
+"""
+st.expander(expanderLabel)
+with st.expander(expanderLabel):
+    st.write("This app is the result of hard work by our team:")
+    st.markdown(expanderBody)
+    
