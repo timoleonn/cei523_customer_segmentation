@@ -863,8 +863,6 @@ This app is the result of hard work by our team:
 - Georgiou Evangelos
 - Nikidiotis Thoma
 """
-st.expander(expanderLabel)
-with st.expander(expanderLabel):
-    st.write("This app is the result of hard work by our team:")
+with st.sidebar.expander(expanderLabel):
     st.markdown(expanderBody)
     
