@@ -476,6 +476,7 @@ def runCodeForSection3():
     # Here we are itterating the process until we obtain a good sillouette average which is arround 0.1+-0.05
     st.write("**Using more than 5 clusters, we saw that we only had a few words. Using less than 3 clusters, we noticed that we will go to binary classification (which we don't want).**")
     st.write("**Therefore, we chose to use 5 clusters.**")
+    st.write("**Here we are itterating the process until we obtain a good sillouette average which is arround 0.1+-0.05**")
     n_clusters = 5
     silhouette_avg = -1
     while silhouette_avg < 0.145:
